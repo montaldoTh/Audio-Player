@@ -1,11 +1,5 @@
 <template>
-  <div class="container" 
-    @dragover.prevent 
-    @drop="handleDrop"
-    @dragenter="isHovering = true"
-    @dragleave="isHovering = false"
-    :class="{ 'hover': isHovering}"
-  >
+  <div class="playerCont">
     <h1> {{ props.lectorName }} lecteur</h1>
     <div class="vol">
       <label>Volume</label>
@@ -27,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, defineEmits } from 'vue'
 
 const props = defineProps({
   lectorName: {
@@ -35,6 +29,8 @@ const props = defineProps({
     default: "Premier"
   }
 })
+
+const emit = defineEmits(['play', 'pause'])
 
 // Déclaration des variables réactives
 const volume = ref(100);
@@ -103,6 +99,7 @@ const playPause = () => {
   if (isPlaying.value) {
     audio1.value.play();
     audio2.value.play();
+    emit('play')
     if (firstPlayer.value) {
       startFade(); // Démarre le fade uniquement si la musique change
     }
@@ -110,34 +107,8 @@ const playPause = () => {
     audio1.value.pause();
     audio2.value.pause();
     stopFade();
+    emit('pause')
   }
-}
-
-// Fonction pour définir la musique à jouer lorsque l'utilisateur charge un fichier
-const handleDrop = (event) => {
-  event.preventDefault(); // Empêche le comportement par défaut
-  event.stopPropagation(); // Empêche la propagation de l'événement
-  const file = event.dataTransfer.files[0]; // Récupère le fichier audio chargé
-  if (file) {
-    const audioSrc = URL.createObjectURL(file); // Crée un URL pour le fichier audio
-    currentTrack.value = file.name; 
-    const wasPlaying = isPlaying.value
-    firstPlayer.value = !firstPlayer.value; // Bascule de lecteur
-    if (firstPlayer.value) {
-      audio1.value.src = audioSrc; // Définit la source audio
-      if (wasPlaying){
-        audio1.value.play()
-        startFade()
-      }
-    } else {
-      audio2.value.src = audioSrc; // Définit la source audio
-      if (wasPlaying){
-        audio2.value.play()
-        startFade()
-      }
-    }
-  }
-  isHovering.value = false;
 }
 
 // Gère le cycle de vie pour arrêter l'intervalle lors du démontage
@@ -147,20 +118,16 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss" scoped>
-  .container{
+  .playerCont{
     background-color: #dadada83;
     max-width: 500px;
+    max-height: 160px;
     display: flex;
     flex-direction: column;
     align-items: center;
     border-radius: 5px;
     padding: 7px;
     transition: background-color 0.3s;
-
-    &.hover{
-      border: 2px dashed #333; /* ou toute autre couleur qui te plaît */
-      background-color: rgba(200, 200, 200, 0.5); /* légers changements de fond */
-    }
 
     .vol, .fade, .file{
       display: flex;
