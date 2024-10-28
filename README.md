@@ -1,29 +1,7 @@
 # Double Audio Player
 
-This template should help get you started developing with Vue 3 in Vite.
+This is a Audio player with 2 of them in the same app, there's a Fade system when you change the audio, for now there's not any queue/playlist system but I'm working on it 
 
-## Recommended IDE Setup
+## How To Get It
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+As you can see, there's no releases for now, so, wait. UwU
