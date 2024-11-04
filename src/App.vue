@@ -1,29 +1,30 @@
 <template>
-  <div>
-    <div class="container"
-      :class="{ hover: firstContainerHovered}"
-      @dragover.prevent="handleDragOver('firstContainer')"
-      @dragleave="(event) => handleDragLeave('firstContainer', event)"
-      @drop.prevent="(event) => handleDrop('firstContainer', event)"
-    >
-      <Player 
-        @play="firstLecteurIsPlaying = true" 
-        @pause="firstLecteurIsPlaying = false"
-      />
-      <Queue />
+  <div 
+    class="app-container"
+    :class="{ hover: isHovering }"
+    @dragover.prevent="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop.prevent="handleDrop"
+  >
+    <div class="playerContainer">
+      <div class="container">
+        <Player 
+          @play="firstLecteurIsPlaying = true" 
+          @pause="firstLecteurIsPlaying = false"
+        />
+      </div>
+      <div class="container">
+        <Player 
+          lectorName="Second" 
+          @play="secondLecteurIsPlaying = true" 
+          @pause="secondLecteurIsPlaying = false"
+        />
+      </div>
     </div>
-    <div class="container"
-      :class="{ hover: secondContainerHovered}"
-      @dragover.prevent="handleDragOver('secondContainer')"
-      @dragleave="(event) => handleDragLeave('secondContainer', event)"
-      @drop.prevent="(event) => handleDrop('secondContainer', event)"
-    >
-      <Player 
-        lectorName="Second" 
-        @play="secondLecteurIsPlaying = true" 
-        @pause="secondLecteurIsPlaying = false"
+    <div class="queueContainer" >
+      <Queue v-for="(playlist, index) in playlists" :key="index"
+      :tracklist="playlist.tracks" :theme="playlist.name"
       />
-      <Queue />
     </div>
   </div>
 </template>
@@ -33,54 +34,58 @@ import Player from './component/Player.vue';
 import Queue from './component/Queue.vue';
 import { ref } from 'vue';
 
-const firstContainerHovered = ref(false)
-const secondContainerHovered = ref(false)
+const isHovering = ref(false)
 const firstLecteurIsPlaying = ref(false)
 const secondLecteurIsPlaying = ref(false)
-const queuePrimary = ref([])
-const queueSecondary = ref([])
+const playlists = ref([])
 
-const handleDragOver = (container) => {
-  if (container === 'firstContainer') {
-    firstContainerHovered.value = true;
-  } else {
-    secondContainerHovered.value = true;
-  }
+const getFileWithDuration = (entry) => {
+  return new Promise((resolve, reject) => {
+    entry.file(async (file) => {
+      const audio = new Audio(URL.createObjectURL(file))
+
+      audio.addEventListener('loadedmetadata', () => {
+        resolve({
+          file,
+          duration: audio.duration
+        })
+      })
+
+      audio.addEventListener('error', (e) => {
+        reject(new Error(`Erreur lors du chargement de la durée : ${e.message}`))
+      })
+    }, (error) => reject(error))
+  })
 }
 
-const handleDragLeave = (container, event) => {
+const handleDragOver = () => {
+  isHovering.value = true
+}
+
+const handleDragLeave = (event) => {
   if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget)) {
-    if (container === 'firstContainer') {
-      firstContainerHovered.value = false;
-    } else {
-      secondContainerHovered.value = false;
-    }
+    isHovering.value = false;
   }
 };
 
-const handleDrop = async (container, event) => {
+const handleDrop = async (event) => {
   event.preventDefault()
 
-  if(container === 'firstContainer'){
-    firstContainerHovered.value = false;
-  } else {
-    secondContainerHovered.value = false;
-  }
+  isHovering.value = false
 
   const items = event.dataTransfer.items
+  const playlistName = prompt("Entrez le thème de la playlist :")
+  if(!playlistName) return
+
   try{
     const files = await Promise.all(Array.from(items).map(getFileEntries))
     const flatFiles = files.flat().filter(Boolean)
-
-    if(container === 'firstContainer'){
-      queuePrimary.value.push(...flatFiles)
-      console.log("Fichier ajoutés au premier conteneur :", flatFiles);
-      console.log("Contenu du conteneur : ", queuePrimary.value);
-    } else if (container === 'secondContainer'){
-      queueSecondary.value.push(...flatFiles)
-      console.log("Fichier ajoutés au second conteneur :", flatFiles);
-      console.log("Contenu du conteneur : ", queueSecondary.value);
-    }
+    
+    playlists.value.push({
+      name: playlistName,
+      tracks: flatFiles
+    })
+    console.log("Playlist créée :", playlists.value);
   } catch (error){
     console.error("Erreur lors du traitement des fichiers :", error)
   }
@@ -89,20 +94,11 @@ const handleDrop = async (container, event) => {
 const getFileEntries = async (item) => {
   const entry = item.webkitGetAsEntry()
   if(entry.isFile){
-    return await getFile(entry)
+    return await getFileWithDuration(entry)
   } else if (entry.isDirectory) {
     return await getFilesFromDirectory(entry)
   }
   return null
-}
-
-const getFile = (entry) =>{
-  return new Promise((resolve, reject) => {
-    entry.file(
-      (file) => resolve(file),
-      (error) => reject(error)
-    )
-  })
 }
 
 const getFilesFromDirectory = async (directoryEntry) => {
@@ -118,7 +114,7 @@ const getFilesFromDirectory = async (directoryEntry) => {
           } else {
             for (const entry of entries){
               if(entry.isFile) {
-                files.push(await getFile(entry))
+                files.push(await getFileWithDuration(entry))
               } else if (entry.isDirectory){
                 files.push(...await getFilesFromDirectory(entry))
               }
@@ -137,11 +133,10 @@ const getFilesFromDirectory = async (directoryEntry) => {
 </script>
 
 <style lang="scss" scoped>
-  .container{
+  .app-container{
+    position: relative;
     display: flex;
     flex-direction: row;
-    margin: 5px 0;
-    position: relative;
 
     &::before {
       content: "Drag & Drop des fichiers ici";
@@ -167,6 +162,28 @@ const getFilesFromDirectory = async (directoryEntry) => {
     &.hover::before{
       opacity: 1;
     }
+
+    .playerContainer{
+      display: flex;
+      flex-direction: column;
+    }
+
+    .queueContainer{
+      display: flex;
+      flex-direction: row;
+      margin: 5px;
+
+      .queueCont{
+        margin: 0 5px;
+      }
+    }
+  }
+
+  .container{
+    display: flex;
+    flex-direction: row;
+    margin: 5px 0;
+    position: relative;
 
     .playerCont{
       min-width: 500px;
