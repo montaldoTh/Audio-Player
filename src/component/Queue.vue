@@ -1,6 +1,13 @@
 <template>
   <div class="queueCont">
     <h1>{{ props.theme }}</h1>
+    <div class="playerSelector">
+      <select v-model="selectedPlayer" @change="handlePlayerChange">
+        <option value="0" :disabled="playerSelected">Choisir le lecteur</option>
+        <option value="1">Lecteur 1</option>
+        <option value="2">Lecteur 2</option>
+      </select>
+    </div>
     <div class="tracklist">
       <div class="track"
         v-for="track in tracklist"
@@ -28,7 +35,29 @@ const props = defineProps({
   }
 })
 
-const localTracklist = ref( ... props.tracklist )
+const emit = defineEmits(['startPlaylist'])
+
+const localTracklist = ref(props.tracklist )
+
+const selectedPlayer = ref("0")
+const playerSelected = ref(false);
+
+const handlePlayerChange = () => {
+  if (selectedPlayer.value !== "0") {
+    playerSelected.value = true;  // Empêche de revenir à "0"
+    startPlaylist()
+  }
+}
+
+const startPlaylist = () => {
+  if(selectedPlayer.value !== "0" && localTracklist.value.length > 0) {
+    const firstTrack = localTracklist.value[0]
+    emit('startPlaylist', {
+      player: selectedPlayer.value,
+      track: firstTrack
+    })
+  }
+}
 
 const formatDuration = (duration) => {
   const minutes = Math.floor(duration / 60);

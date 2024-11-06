@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, defineEmits } from 'vue'
+import { ref, onBeforeUnmount, defineEmits } from 'vue'
 
 const props = defineProps({
   lectorName: {
@@ -40,7 +40,6 @@ const firstPlayer = ref(false); // Indicateur du lecteur actif
 const volPerc = ref(100); // Pourcentage du volume actuel
 let fadeInterval;
 const currentTrack = ref('');
-const isHovering = ref(false)
 
 // Références pour les éléments audio
 const audio1 = ref(new Audio());
@@ -111,10 +110,28 @@ const playPause = () => {
   }
 }
 
+const startPlaylist = (payload) => {
+  currentTrack.value = payload.trackName || 'No track name'
+
+  if (!firstPlayer.value){
+    audio1.value.src = payload.trackUrl
+    firstPlayer.value = true
+  } else {
+    audio2.value.src = payload.trackUrl
+    firstPlayer.value = false
+  }
+
+  playPause()
+}
+
 // Gère le cycle de vie pour arrêter l'intervalle lors du démontage
 onBeforeUnmount(() => {
   stopFade();
 });
+
+defineExpose({
+  startPlaylist
+})
 </script>
 
 <style lang="scss" scoped>

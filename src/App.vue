@@ -9,6 +9,8 @@
     <div class="playerContainer">
       <div class="container">
         <Player 
+          ref="player1"
+          :isPlaying="firstLecteurIsPlaying"
           @play="firstLecteurIsPlaying = true" 
           @pause="firstLecteurIsPlaying = false"
         />
@@ -16,6 +18,8 @@
       <div class="container">
         <Player 
           lectorName="Second" 
+          ref="player2"
+          :isPlaying="secondLecteurIsPlaying"
           @play="secondLecteurIsPlaying = true" 
           @pause="secondLecteurIsPlaying = false"
         />
@@ -24,6 +28,7 @@
     <div class="queueContainer" >
       <Queue v-for="(playlist, index) in playlists" :key="index"
       :tracklist="playlist.tracks" :theme="playlist.name"
+      @startPlaylist="startPlaylist"
       />
     </div>
   </div>
@@ -38,6 +43,24 @@ const isHovering = ref(false)
 const firstLecteurIsPlaying = ref(false)
 const secondLecteurIsPlaying = ref(false)
 const playlists = ref([])
+const player1 = ref(null);
+const player2 = ref(null);
+
+const currentTracks = ref({ 1: [], 2:[] })
+
+const startPlaylist = ({ player, track }) => {
+  currentTracks.value[player] = [track]
+  console.log(track);
+  const targetPlayer = player === '1' ? player1.value : player2.value
+  if(targetPlayer && track){
+    
+    const trackUrl = URL.createObjectURL(track.file)
+    const trackName = track.file.name
+    console.log(trackUrl);
+    console.log(trackName);
+    targetPlayer.startPlaylist({ trackUrl, trackName }) 
+  }
+}
 
 const getFileWithDuration = (entry) => {
   return new Promise((resolve, reject) => {
