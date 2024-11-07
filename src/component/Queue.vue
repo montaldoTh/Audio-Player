@@ -14,7 +14,7 @@
         :key="track.id"
         :data="track"
       >
-        <p>{{ formatDisplayName(track.file.name) }}</p>
+        <p>{{ formatDisplayName(track.name) }}</p>
         <p>{{ formatDuration(track.duration) }}</p>
       </div>
     </div>
@@ -35,26 +35,23 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['startPlaylist'])
-
-const localTracklist = ref(props.tracklist )
-
 const selectedPlayer = ref("0")
 const playerSelected = ref(false);
+
+const emit = defineEmits(['selectPlaylist'])
 
 const handlePlayerChange = () => {
   if (selectedPlayer.value !== "0") {
     playerSelected.value = true;  // Empêche de revenir à "0"
-    startPlaylist()
+    selectPlaylist()
   }
 }
 
-const startPlaylist = () => {
-  if(selectedPlayer.value !== "0" && localTracklist.value.length > 0) {
-    const firstTrack = localTracklist.value[0]
-    emit('startPlaylist', {
+const selectPlaylist = () => {
+  if(selectedPlayer.value !== "0") {
+    emit('selectPlaylist', {
       player: selectedPlayer.value,
-      track: firstTrack
+      theme: props.theme
     })
   }
 }

@@ -39,6 +39,7 @@ const isPlaying = ref(false);
 const firstPlayer = ref(false); // Indicateur du lecteur actif
 const volPerc = ref(100); // Pourcentage du volume actuel
 let fadeInterval;
+const playlist = ref([])
 const currentTrack = ref('');
 
 // Références pour les éléments audio
@@ -110,18 +111,8 @@ const playPause = () => {
   }
 }
 
-const startPlaylist = (payload) => {
-  currentTrack.value = payload.trackName || 'No track name'
-
-  if (!firstPlayer.value){
-    audio1.value.src = payload.trackUrl
-    firstPlayer.value = true
-  } else {
-    audio2.value.src = payload.trackUrl
-    firstPlayer.value = false
-  }
-
-  playPause()
+const setPlaylist = (tracks) => {
+  playlist.value = tracks
 }
 
 // Gère le cycle de vie pour arrêter l'intervalle lors du démontage
@@ -130,7 +121,7 @@ onBeforeUnmount(() => {
 });
 
 defineExpose({
-  startPlaylist
+  setPlaylist
 })
 </script>
 

@@ -26,9 +26,9 @@
       </div>
     </div>
     <div class="queueContainer" >
-      <Queue v-for="(playlist, index) in playlists" :key="index"
-      :tracklist="playlist.tracks" :theme="playlist.name"
-      @startPlaylist="startPlaylist"
+      <Queue v-for="(playlist, index) in playlistsWithoutFiles" :key="index"
+      :tracklist="playlist.tracks" :theme="playlist.theme"
+      @selectPlaylist="bindPlaylist"
       />
     </div>
   </div>
@@ -43,22 +43,17 @@ const isHovering = ref(false)
 const firstLecteurIsPlaying = ref(false)
 const secondLecteurIsPlaying = ref(false)
 const playlists = ref([])
+const playlistsWithoutFiles = ref([])
 const player1 = ref(null);
 const player2 = ref(null);
 
-const currentTracks = ref({ 1: [], 2:[] })
-
-const startPlaylist = ({ player, track }) => {
-  currentTracks.value[player] = [track]
-  console.log(track);
+const bindPlaylist = ({ player, theme }) => {
   const targetPlayer = player === '1' ? player1.value : player2.value
-  if(targetPlayer && track){
-    
-    const trackUrl = URL.createObjectURL(track.file)
-    const trackName = track.file.name
-    console.log(trackUrl);
-    console.log(trackName);
-    targetPlayer.startPlaylist({ trackUrl, trackName }) 
+  if(targetPlayer && theme){
+    const result = playlists.value.find(playlist => playlist.theme === theme)
+    if(result){
+      targetPlayer.setPlaylist(result.tracks)
+    }
   }
 }
 
@@ -104,11 +99,24 @@ const handleDrop = async (event) => {
     const files = await Promise.all(Array.from(items).map(getFileEntries))
     const flatFiles = files.flat().filter(Boolean)
     
+    const musicsData = ref({})
+    musicsData.theme = playlistName
+    musicsData.tracks = []
+
+    flatFiles.forEach((flatFile) => {
+      musicsData.tracks.push({
+        name: flatFile.file.name,
+        duration: flatFile.duration
+      })
+    })
+
+    playlistsWithoutFiles.value.push(musicsData)
+    
     playlists.value.push({
-      name: playlistName,
+      theme: playlistName,
       tracks: flatFiles
     })
-    console.log("Playlist créée :", playlists.value);
+
   } catch (error){
     console.error("Erreur lors du traitement des fichiers :", error)
   }
